@@ -1,4 +1,3 @@
-js
 // scripts/seed.js
 const db = require('../server/db');
 
