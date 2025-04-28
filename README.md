@@ -26,5 +26,5 @@
 
 ## 📬 Feedback & Contributions
 
-Feel free to open issues or pull requests to improve this mock portal.
+Feel free to open issues or pull requests to improve this portal.
 
