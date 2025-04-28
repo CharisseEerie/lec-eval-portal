@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h1>Student: <%= student.name %> (<%= student.reg_no %>)</h1>
+
+  <% if(printed){ %>
+    <p style="color:green">▶️ Already printed by admin</p>
+  <% } else if(!status.allDone){ %>
+    <p style="color:red">⛔ Cannot print — <%= status.pending.length %> evaluations pending.</p>
+  <% } else { %>
+    <form method="post">
+      <button type="submit">Print Exam Card</button>
+    </form>
+  <% } %>
+
+  <h2>Courses & Evaluation Status</h2>
+  <ul>
+    <% status.pending.forEach(c=>{ %>
+      <li><%= c.code %>: <%= c.title %> — <em><%= c.lecturer %></em> [PENDING]</li>
+    <% }) %>
+    <% if(status.allDone) { %>
+      <li>All evaluations complete ✅</li>
+    <% } %>
+  </ul>
+
+  <p><a href="/admin/dashboard">← Back to Dashboard</a></p>
+</body>
+</html>

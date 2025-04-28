@@ -4,8 +4,9 @@
   "main": "app.js",
   "scripts": {
     "start": "node server/app.js",
-    "seed": "node scripts/seed.js"
-  },
+    "seed": "node scripts/seed.js",
+    "init": "node scripts/init.js"
+},
   "dependencies": {
     "express": "^4.18.2",
     "sqlite3": "^5.1.6",

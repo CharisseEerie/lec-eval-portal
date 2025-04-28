@@ -28,3 +28,34 @@
 
 Feel free to open issues or pull requests to improve this portal.
 
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <h1>Welcome, <%= student.name %></h1>
+
+  <% if (status.allDone) { %>
+    <p class="success">✅ You’ve completed all evaluations.</p>
+    <form method="post" action="/print">
+      <button type="submit">Print Exam Card</button>
+    </form>
+  <% } else { %>
+    <p class="error">⛔ Please complete evaluations for:</p>
+    <ul>
+      <% status.pending.forEach(c => { %>
+        <li><strong><%= c.code %></strong>: <%= c.title %> (<em>Lecturer: <%= c.lecturer %></em>)</li>
+      <% }) %>
+    </ul>
+    <p>
+      <a href="https://evaluation.school.ac.ke" target="_blank" rel="noopener noreferrer" class="btn">Go to Lecturer Evaluation Site</a>
+    </p>
+
+    <section>
+      <h2>Why Evaluate?</h2>
+      <p>Lecturer feedback improves teaching quality and curriculum, ensuring your voice is heard and course content is continuously enhanced.</p>
+    </section>
+  <% } %>
+</body>
+</html>

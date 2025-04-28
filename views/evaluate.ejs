@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head><link rel="stylesheet" href="/css/style.css"></head>
+<body>
+  <h1>Evaluate Your Lecturers</h1>
+  <form method="post" action="/evaluate">
+    <% enrolls.forEach(en=>{ %>
+      <fieldset>
+        <legend><%= en.code %>: <%= en.title %> — <em><%= en.lecturer %></em></legend>
+        <% questions.forEach(q=>{ %>
+          <div>
+            <label><%= q.text %></label>
+            <% if(q.type==='yesno'){ %>
+              <label><input type="radio" name="responses[<%=en.id%>][<%=q.id%>]" value="Yes" required> Yes</label>
+              <label><input type="radio" name="responses[<%=en.id%>][<%=q.id%>]" value="No"> No</label>
+            <% } else { %>
+              <select name="responses[<%=en.id%>][<%=q.id%>]" required>
+                <option value="">--Select--</option>
+                <option value="1">1 – Strongly Disagree</option>
+                <option value="2">2 – Disagree</option>
+                <option value="3">3 – Neutral</option>
+                <option value="4">4 – Agree</option>
+                <option value="5">5 – Strongly Agree</option>
+              </select>
+            <% } %>
+          </div>
+        <% }) %>
+        <div>
+          <label>Additional comments:</label><br>
+          <textarea name="comment[<%=en.id%>]" rows="3"></textarea>
+        </div>
+      </fieldset>
+    <% }) %>
+    <button type="submit">Submit Evaluations</button>
+  </form>
+</body>
+</html>

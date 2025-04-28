@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h1>Admin Dashboard</h1>
+  <p>Welcome, <%= admin.username %></p>
+  <table border="1" cellpadding="5">
+    <tr><th>Reg No</th><th>Name</th><th>Done/Total</th><th>Printed?</th><th>Action</th></tr>
+    <% data.forEach(s=>{ %>
+      <tr>
+        <td><%= s.reg_no %></td>
+        <td><%= s.name %></td>
+        <td><%= (s.total - s.pending) %> / <%= s.total %></td>
+        <td><%= s.printed ? 'Yes' : 'No' %></td>
+        <td><form method="get" action="/evaluate">
+            <button type="submit">Go to Lecturer Evaluation Site</button> 
+            </form>
+      </tr>
+    <% }) %>
+  </table>
+</body>
+</html>
