@@ -1,4 +1,4 @@
-# 🧑‍🎓📚 Mock Lecturer Evaluation Portal
+# 🧑‍🎓📚 Lecturer Evaluation Portal
 
 **Purpose:** This portal verifies that a student has completed all lecturer evaluations for their enrolled course units before granting access to their exam card.
 
