@@ -3,19 +3,19 @@ const db = require('../server/db');
 
 (async () => {
   try {
-    // Initialize database and tables
+    // Initialize DB and tables
     await db.init();
 
-    // 0. Wipe existing data
+    // 0. Clear existing data
     const tables = [
-      'feedback','prints','evaluations','enrollments',
-      'course_lecturers','courses','lecturers','students','questions','admins'
+      'feedback', 'prints', 'evaluations', 'enrollments',
+      'course_lecturers', 'courses', 'lecturers', 'students', 'questions', 'admins'
     ];
     for (const tbl of tables) {
       await db.run(`DELETE FROM ${tbl}`);
     }
 
-    // 1. Seed students (30)
+    // 1. Seed Students
     const students = [
       ['I21/6447/2021','CHARISSE SARAH A.'],
       ['I21/7654/2021','ALVIN KIPRONO SAMINI'],
@@ -55,7 +55,7 @@ const db = require('../server/db');
       );
     }
 
-    // 2. Seed lecturers (10)
+    // 2. Seed Lecturers
     const lecturers = [
       ['TSC/10001','Dr. Amina Mwende'],
       ['TSC/10002','Prof. John Otieno'],
@@ -68,14 +68,16 @@ const db = require('../server/db');
       ['TSC/10009','Dr. Angela Mwangi'],
       ['TSC/10010','Dr. Robert Smith (USA)']
     ];
+    const lectIdByTsc = {};
     for (const [tsc, name] of lecturers) {
-      await db.run(
+      const res = await db.run(
         'INSERT INTO lecturers (tsc_no,name) VALUES (?,?)',
         [tsc, name]
       );
+      lectIdByTsc[tsc] = res.lastID;
     }
 
-    // 3. Seed courses (50)
+    // 3. Seed Courses
     const courses = [
       ['CS101','Introduction to Computer Science'],
       ['CS102','Data Structures & Algorithms'],
@@ -128,51 +130,47 @@ const db = require('../server/db');
       ['LIBS101','Library Science Fundamentals'],
       ['SPEDE101','Special Education Methods']
     ];
+    const courseIdByCode = {};
     for (const [code, title] of courses) {
-      await db.run(
+      const res = await db.run(
         'INSERT INTO courses (code,title) VALUES (?,?)',
         [code, title]
       );
+      courseIdByCode[code] = res.lastID;
     }
 
-    // 4. Associate courses to lecturers
+    // 4. Map Courses to Lecturers
     const courseLectMap = {
-      CS101: 'TSC/10001', CS102: 'TSC/10001', IS101: 'TSC/10001', INFO102: 'TSC/10001', BIOT101: 'TSC/10001',
-      MATH101: 'TSC/10002', MATH102: 'TSC/10002', STAT101: 'TSC/10002', PHYS101: 'TSC/10002', CIVL101: 'TSC/10002',
-      BIO101: 'TSC/10003', CHEM101: 'TSC/10003', PHAR101: 'TSC/10003', BICH101: 'TSC/10003', MBC101: 'TSC/10003',
-      ECON101: 'TSC/10004', ECON102: 'TSC/10004', FIN101: 'TSC/10004', ACC101: 'TSC/10004', PROC101: 'TSC/10004',
-      PSY101: 'TSC/10005', SOC101: 'TSC/10005', POLS101: 'TSC/10005', HIST101: 'TSC/10005', GEOG101: 'TSC/10005',
-      ED101: 'TSC/10006', NURS101: 'TSC/10006', SPEDE101: 'TSC/10006', ENV101: 'TSC/10006', FOOD101: 'TSC/10006',
-      TOUR101: 'TSC/10007', HOSP101: 'TSC/10007', MKT101: 'TSC/10007', HRM101: 'TSC/10007', LOG101: 'TSC/10007',
-      ARCH101: 'TSC/10008', ELEC101: 'TSC/10008', MECH101: 'TSC/10008', ELEP101: 'TSC/10008', VET101: 'TSC/10008',
-      BA101:  'TSC/10009', BA102:  'TSC/10009', HE101:  'TSC/10009', AGSC101: 'TSC/10009', LAW101: 'TSC/10009',
-      MED101: 'TSC/10010', DENT101:'TSC/10010'
+      CS101:'TSC/10001',CS102:'TSC/10001',IS101:'TSC/10001',INFO102:'TSC/10001',
+      MATH101:'TSC/10002',MATH102:'TSC/10002',STAT101:'TSC/10002',PHYS101:'TSC/10002',
+      BIO101:'TSC/10003',CHEM101:'TSC/10003',BICH101:'TSC/10003',MBC101:'TSC/10003',PHAR101:'TSC/10003',
+      ECON101:'TSC/10004',ECON102:'TSC/10004',FIN101:'TSC/10004',ACC101:'TSC/10004',PROC101:'TSC/10004',
+      PSY101:'TSC/10005',SOC101:'TSC/10005',POLS101:'TSC/10005',HIST101:'TSC/10005',GEOG101:'TSC/10005',
+      ED101:'TSC/10006',NURS101:'TSC/10006',SPEDE101:'TSC/10006',ENV101:'TSC/10006',FOOD101:'TSC/10006',
+      TOUR101:'TSC/10007',HOSP101:'TSC/10007',MKT101:'TSC/10007',HRM101:'TSC/10007',LOG101:'TSC/10007'
     };
-    const courseRows = await db.all('SELECT id,code FROM courses');
-    const lectRows = await db.all('SELECT id,tsc_no FROM lecturers');
-    const courseIdByCode = new Map(courseRows.map(c => [c.code, c.id]));
-    const lectIdByTsc = new Map(lectRows.map(l => [l.tsc_no, l.id]));
-
     for (const [code, tsc] of Object.entries(courseLectMap)) {
-      const course_id = courseIdByCode.get(code);
-      const lecturer_id = lectIdByTsc.get(tsc);
-      if (course_id && lecturer_id) {
+      const cid = courseIdByCode[code];
+      const lid = lectIdByTsc[tsc];
+      if (cid && lid) {
         await db.run(
           'INSERT INTO course_lecturers (course_id,lecturer_id) VALUES (?,?)',
-          [course_id, lecturer_id]
+          [cid, lid]
         );
       }
     }
 
-    // 5. Enroll students and seed evaluations
-    const studentRows = await db.all('SELECT id FROM students');
-    for (const { id: student_id } of studentRows) {
-      const count = 5 + Math.floor(Math.random() * 8); // 5-12 courses
-      const selected = shuffle(courseRows).slice(0, count);
-      for (const { id: course_id } of selected) {
+    // 5. Enroll Students & Seed Evaluations
+    const studs = await db.all('SELECT id FROM students');
+    for (const { id: sid } of studs) {
+      const count = 5 + Math.floor(Math.random() * 8);
+      const codes = Object.keys(courseIdByCode);
+      const selected = shuffle(codes).slice(0, count);
+      for (const code of selected) {
+        const course_id = courseIdByCode[code];
         const en = await db.run(
           'INSERT INTO enrollments (student_id,course_id) VALUES (?,?)',
-          [student_id, course_id]
+          [sid, course_id]
         );
         const done = Math.random() < 0.8;
         await db.run(
@@ -182,13 +180,13 @@ const db = require('../server/db');
       }
     }
 
-    // 6. Admin users
-    const admins = [['admin1','password123'],['admin2','password123']];
+    // 6. Seed Admins
+    const admins = [ ['admin1','password123'], ['admin2','password123'] ];
     for (const [u,p] of admins) {
       await db.run('INSERT INTO admins (username,password) VALUES (?,?)',[u,p]);
     }
 
-    // 7. Evaluation questions
+    // 7. Seed Questions
     const questions = [
       ['Was the lecturer prepared for each class?','yesno'],
       ['Did the lecturer provide materials on time?','yesno'],
@@ -210,12 +208,12 @@ const db = require('../server/db');
   }
 })();
 
-// Helper to shuffle an array
+// Helper: Fisher-Yates Shuffle
 function shuffle(array) {
-  const arr = array.slice();
-  for (let i = arr.length - 1; i > 0; i--) {
+  const a = array.slice();
+  for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+    [a[i], a[j]] = [a[j], a[i]];
   }
-  return arr;
+  return a;
 }
