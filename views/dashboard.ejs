@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html><head><link rel="stylesheet" href="/css/style.css"></head><body>
+  <h1>Welcome, <%= student.name %></h1>
+  <% if(status.allDone) { %>
+    <p class="success">✅ You’ve completed all evaluations.</p>
+    <form method="post" action="/print">
+      <button type="submit">Print Exam Card</button>
+    </form>
+  <% } else { %>
+    <p class="error">⛔ Please complete evaluations for:</p>
+    <ul>
+      <% status.pending.forEach(c=>{ %>
+        <li><%= c.code %>: <%= c.title %></li>
+      <% }) %>
+    </ul>
+    <p><a href="#">Go to lecturer evaluation site</a></p>
+    <section>
+      <h2>Why Evaluate?</h2>
+      <p>Lecturer feedback improves teaching quality and curriculum.</p>
+    </section>
+  <% } %>
+</body></html>
