@@ -1,8 +1,9 @@
+// server/db.js
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const db = new sqlite3.Database(path.join(__dirname, '../data/db.sqlite'));
 
-function run(sql, params=[]) {
+function run(sql, params = []) {
   return new Promise((resolve, reject) => {
     db.run(sql, params, function(err) {
       if (err) reject(err);
@@ -10,8 +11,7 @@ function run(sql, params=[]) {
     });
   });
 }
-
-function get(sql, params=[]) {
+function get(sql, params = []) {
   return new Promise((resolve, reject) => {
     db.get(sql, params, (err, row) => {
       if (err) reject(err);
@@ -19,8 +19,7 @@ function get(sql, params=[]) {
     });
   });
 }
-
-function all(sql, params=[]) {
+function all(sql, params = []) {
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err, rows) => {
       if (err) reject(err);
@@ -31,44 +30,70 @@ function all(sql, params=[]) {
 
 module.exports = {
   init: async () => {
-    await run(\`CREATE TABLE IF NOT EXISTS students (
+    // students
+    await run(`CREATE TABLE IF NOT EXISTS students (
       id INTEGER PRIMARY KEY,
-      portal_id TEXT UNIQUE,
+      reg_no TEXT UNIQUE,
       name TEXT,
       email TEXT
-    )\`);
-    await run(\`CREATE TABLE IF NOT EXISTS courses (
+    )`);
+    // lecturers
+    await run(`CREATE TABLE IF NOT EXISTS lecturers (
       id INTEGER PRIMARY KEY,
-      code TEXT,
-      title TEXT,
-      semester TEXT
-    )\`);
-    await run(\`CREATE TABLE IF NOT EXISTS enrollments (
+      tsc_no TEXT UNIQUE,
+      name TEXT
+    )`);
+    // courses
+    await run(`CREATE TABLE IF NOT EXISTS courses (
+      id INTEGER PRIMARY KEY,
+      code TEXT UNIQUE,
+      title TEXT
+    )`);
+    // course→lecturer assignment
+    await run(`CREATE TABLE IF NOT EXISTS course_lecturers (
+      id INTEGER PRIMARY KEY,
+      course_id INTEGER,
+      lecturer_id INTEGER,
+      FOREIGN KEY(course_id) REFERENCES courses(id),
+      FOREIGN KEY(lecturer_id) REFERENCES lecturers(id)
+    )`);
+    // enrollments
+    await run(`CREATE TABLE IF NOT EXISTS enrollments (
       id INTEGER PRIMARY KEY,
       student_id INTEGER,
-      course_id INTEGER
-    )\`);
-    await run(\`CREATE TABLE IF NOT EXISTS evaluations (
+      course_id INTEGER,
+      FOREIGN KEY(student_id) REFERENCES students(id),
+      FOREIGN KEY(course_id) REFERENCES courses(id)
+    )`);
+    // evaluations
+    await run(`CREATE TABLE IF NOT EXISTS evaluations (
       enrollment_id INTEGER PRIMARY KEY,
       completed BOOLEAN,
-      completed_at DATETIME
-    )\`);
+      completed_at DATETIME,
+      FOREIGN KEY(enrollment_id) REFERENCES enrollments(id)
+    )`);
   },
-  run,
-  get,
-  all,
-  getStudentByPortalID: async portal_id => {
-    return get('SELECT * FROM students WHERE portal_id = ?', [portal_id]);
-  },
+
+  run, get, all,
+
+  // existing helpers
+  getStudentByRegNo: async reg_no =>
+    get('SELECT * FROM students WHERE reg_no = ?', [reg_no]),
+
   checkAllEvaluations: async student_id => {
-    const courses = await all(\`
-      SELECT c.code, c.title, e.completed
+    const rows = await all(`
+      SELECT c.code, c.title, l.name as lecturer, e.completed
       FROM enrollments en
       JOIN courses c ON en.course_id = c.id
+      JOIN course_lecturers cl ON cl.course_id = c.id
+      JOIN lecturers l ON cl.lecturer_id = l.id
       LEFT JOIN evaluations e ON e.enrollment_id = en.id
       WHERE en.student_id = ?
-    \`, [student_id]);
-    const pending = courses.filter(c => !c.completed);
-    return { allDone: pending.length === 0, pending };
+    `, [student_id]);
+
+    const pending = rows.filter(r => !r.completed);
+    return { allDone: pending.length === 0, pending: pending.map(r => ({
+      code: r.code, title: r.title, lecturer: r.lecturer
+    })) };
   }
 };
