@@ -2,9 +2,9 @@
 
 **Purpose:** This portal verifies that a student has completed all lecturer evaluations for their enrolled course units before granting access to their exam card.
 
----
 
-## 🎯 Key Features
+
+##  Key Features
 
 - **SSO Login:** Students use their corporate email and password to sign in.
 - **Per-Course Evaluation Check:** Ensures each enrolled course unit has a completed evaluation record.
@@ -12,9 +12,9 @@
 - **Guidance for Pending Evaluations:** Lists any course units awaiting feedback, with a link to the evaluation site and a brief rationale on why lecturer feedback matters.
 - **Self-Contained Mock:** Uses a sample SQLite database and placeholder data to simulate real portal behavior.
 
----
 
-## 🔧 How It Works
+
+##  How It Works
 
 1. **Login** with corporate email (portal ID) and a standard password.
 2. The server queries the database for all `enrollments` & `evaluations`.
