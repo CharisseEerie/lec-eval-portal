@@ -1,14 +1,20 @@
 // scripts/seed.js
 const db = require('../server/db');
+
 (async () => {
+  // Initialize DB and tables
   await db.init();
 
-  // wipe existing
-  for(const tbl of ['evaluations','enrollments','course_lecturers','courses','lecturers','students']) {
+  // 0. Wipe existing data
+  const tables = [
+    'feedback', 'prints', 'evaluations', 'enrollments',
+    'course_lecturers', 'courses', 'lecturers', 'students', 'questions', 'admins'
+  ];
+  for (const tbl of tables) {
     await db.run(`DELETE FROM ${tbl}`);
   }
 
-  // 1. Students
+  // 1. Students (30)
   const students = [
     ['I21/6447/2021','CHARISSE SARAH A.'],
     ['I21/7654/2021','ALVIN KIPRONO SAMINI'],
@@ -40,12 +46,15 @@ const db = require('../server/db');
     ['F18/2284/2021','KINUTHIA ERIC NDUNGU'],
     ['F18/2285/2021','GITONGA PAUL NYARE']
   ];
-  for(const [reg,name] of students) {
+  for (const [reg, name] of students) {
     const email = reg.split('/').slice(1).join('/') + '@studnts.ku.ac.ke';
-    await db.run('INSERT INTO students (reg_no,name,email) VALUES (?,?,?)', [reg,name,email]);
+    await db.run(
+      'INSERT INTO students (reg_no,name,email) VALUES (?,?,?)',
+      [reg, name, email]
+    );
   }
 
-  // 2. Lecturers
+  // 2. Lecturers (10)
   const lecturers = [
     ['TSC/10001','Dr. Amina Mwende'],
     ['TSC/10002','Prof. John Otieno'],
@@ -58,11 +67,14 @@ const db = require('../server/db');
     ['TSC/10009','Dr. Angela Mwangi'],
     ['TSC/10010','Dr. Robert Smith (USA)']
   ];
-  for(const [tsc,name] of lecturers) {
-    await db.run('INSERT INTO lecturers (tsc_no,name) VALUES (?,?)', [tsc,name]);
+  for (const [tsc, name] of lecturers) {
+    await db.run(
+      'INSERT INTO lecturers (tsc_no,name) VALUES (?,?)',
+      [tsc, name]
+    );
   }
 
-  // 3. Courses
+  // 3. Courses (50)
   const courses = [
     ['CS101','Introduction to Computer Science'],
     ['CS102','Data Structures & Algorithms'],
@@ -115,53 +127,88 @@ const db = require('../server/db');
     ['LIBS101','Library Science Fundamentals'],
     ['SPEDE101','Special Education Methods']
   ];
-  for(const [code,title] of courses) {
-    await db.run('INSERT INTO courses (code,title) VALUES (?,?)', [code,title]);
+  for (const [code, title] of courses) {
+    await db.run(
+      'INSERT INTO courses (code,title) VALUES (?,?)',
+      [code, title]
+    );
   }
 
-  // 4. Assign each course to its lecturer
+  // 4. Assign courses to lecturers
   const courseLectMap = {
-    CS101:10001, CS102:10001, IS101:10001, INFO102:10001, BIOT101:10001,
-    MATH101:10002, MATH102:10002, STAT101:10002, PHYS101:10002, CIVL101:10002,
-    BIO101:10003, CHEM101:10003, PHAR101:10003, BICH101:10003, MBC101:10003,
-    ECON101:10004, ECON102:10004, FIN101:10004, ACC101:10004, PROC101:10004,
-    PSY101:10005, SOC101:10005, POLS101:10005, HIST101:10005, GEOG101:10005,
-    ED101:10006, NURS101:10006, SPEDE101:10006, ENV101:10006, FOOD101:10006,
-    TOUR101:10007, HOSP101:10007, MKT101:10007, HRM101:10007, LOG101:10007,
-    ARCH101:10008, ELEC101:10008, MECH101:10008, ELEP101:10008, VET101:10008,
-    BA101:10009, BA102:10009, HE101:10009, AGSC101:10009, LAW101:10009,
-    MED101:10010, DENT101:10010
+    CS101:'TSC/10001', CS102:'TSC/10001', IS101:'TSC/10001', INFO102:'TSC/10001', BIOT101:'TSC/10001',
+    MATH101:'TSC/10002', MATH102:'TSC/10002', STAT101:'TSC/10002', PHYS101:'TSC/10002', CIVL101:'TSC/10002',
+    BIO101:'TSC/10003', CHEM101:'TSC/10003', PHAR101:'TSC/10003', BICH101:'TSC/10003', MBC101:'TSC/10003',
+    ECON101:'TSC/10004', ECON102:'TSC/10004', FIN101:'TSC/10004', ACC101:'TSC/10004', PROC101:'TSC/10004',
+    PSY101:'TSC/10005', SOC101:'TSC/10005', POLS101:'TSC/10005', HIST101:'TSC/10005', GEOG101:'TSC/10005',
+    ED101:'TSC/10006', NURS101:'TSC/10006', SPEDE101:'TSC/10006', ENV101:'TSC/10006', FOOD101:'TSC/10006',
+    TOUR101:'TSC/10007', HOSP101:'TSC/10007', MKT101:'TSC/10007', HRM101:'TSC/10007', LOG101:'TSC/10007',
+    ARCH101:'TSC/10008', ELEC101:'TSC/10008', MECH101:'TSC/10008', ELEP101:'TSC/10008', VET101:'TSC/10008',
+    BA101:'TSC/10009', BA102:'TSC/10009', HE101:'TSC/10009', AGSC101:'TSC/10009', LAW101:'TSC/10009',
+    MED101:'TSC/10010', DENT101:'TSC/10010'
   };
-  // load course & lecturer IDs
   const allCourses = await db.all('SELECT id,code FROM courses');
   const allLects = await db.all('SELECT id,tsc_no FROM lecturers');
-  const lectIdByTsc = Object.fromEntries(allLects.map(l => [l.tsc_no.replace('TSC/',''), l.id]));
   const courseIdByCode = Object.fromEntries(allCourses.map(c => [c.code, c.id]));
+  const lectIdByTsc = Object.fromEntries(allLects.map(l => [l.tsc_no, l.id]));
 
-  for(const [code, tscNum] of Object.entries(courseLectMap)) {
+  for (const [code, tsc] of Object.entries(courseLectMap)) {
     const course_id = courseIdByCode[code];
-    const lecturer_id = lectIdByTsc[tscNum];
-    await db.run('INSERT INTO course_lecturers (course_id,lecturer_id) VALUES (?,?)', [course_id,lecturer_id]);
+    const lecturer_id = lectIdByTsc[tsc];
+    await db.run(
+      'INSERT INTO course_lecturers (course_id,lecturer_id) VALUES (?,?)',
+      [course_id, lecturer_id]
+    );
   }
 
-  // 5. Enroll each student in 5–12 random courses
-  const studentsRows = await db.all('SELECT id FROM students');
-  for(const {id: student_id} of studentsRows) {
-    // pick random count 5-12
-    const count = 5 + Math.floor(Math.random()*8);
-    // shuffle & slice
-    const shuffled = [...allCourses].sort(()=>0.5-Math.random());
-    const chosen = shuffled.slice(0,count);
-    for(const {id: course_id} of chosen) {
-      const en = await db.run('INSERT INTO enrollments (student_id,course_id) VALUES (?,?)',[student_id,course_id]);
-      // 6. evaluations: ~80% chance completed
+  // 5. Enroll students and seed evaluations
+  for (const { id: student_id } of await db.all('SELECT id FROM students')) {
+    const count = 5 + Math.floor(Math.random() * 8); // 5-12 courses
+    const shuffled = [...allCourses].sort(() => 0.5 - Math.random());
+    const chosen = shuffled.slice(0, count);
+    for (const { id: course_id } of chosen) {
+      const en = await db.run(
+        'INSERT INTO enrollments (student_id,course_id) VALUES (?,?)',
+        [student_id, course_id]
+      );
       const done = Math.random() < 0.8;
       const completed_at = done ? new Date().toISOString() : null;
-      await db.run('INSERT INTO evaluations (enrollment_id,completed,completed_at) VALUES (?,?,?)',
-                   [en.lastID, done?1:0, completed_at]);
+      await db.run(
+        'INSERT INTO evaluations (enrollment_id,completed,completed_at) VALUES (?,?,?)',
+        [en.lastID, done ? 1 : 0, completed_at]
+      );
     }
   }
 
-  console.log('🎓 Database seeded with students, lecturers, courses, enrollments & evaluations.');
+  // 6. Admin users
+  const admins = [
+    ['admin1','password123'],
+    ['admin2','password123']
+  ];
+  for (const [u,p] of admins) {
+    await db.run(
+      'INSERT INTO admins (username,password) VALUES (?,?)',
+      [u,p]
+    );
+  }
+
+  // 7. Evaluation questions
+  const questions = [
+    ['Was the lecturer prepared for each class?','yesno'],
+    ['Did the lecturer provide materials on time?','yesno'],
+    ['Did the lecturer explain concepts clearly?','likert'],
+    ['Did the lecturer answer questions satisfactorily?','likert'],
+    ['Did the lecturer assign relevant assignments?','yesno'],
+    ['Rate the overall teaching quality (1=Strongly Disagree…5=Strongly Agree)','likert'],
+    ['Was the lecturer available outside class hours?','yesno']
+  ];
+  for (const [text,type] of questions) {
+    await db.run(
+      'INSERT INTO questions (text,type) VALUES (?,?)',
+      [text,type]
+    );
+  }
+
+  console.log('✅ Seed complete.');
   process.exit(0);
 })();
