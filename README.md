@@ -1,26 +1,33 @@
-# Mock Lecturer Evaluation Portal
+# 🧑‍🎓📚 Mock Lecturer Evaluation Portal
 
-## Setup
+**Purpose:** This portal verifies that a student has completed all lecturer evaluations for their enrolled course units before granting access to their exam card.
 
-1. Extract this ZIP.
-2. `cd mock-eval-portal`
-3. `npm install`
-4. `npm run seed`
-5. `npm start`
-6. Visit http://localhost:3000 in your browser.
+---
 
-## Usage
+## 🎯 Key Features
 
-- Login with portal ID (e.g., stu001) and password "password123".
-- Students who have completed all course evaluations will see a "Print Exam Card" button.
-- Others will see a list of pending courses and a message to complete evaluations.
+- **SSO Login:** Students use their corporate email and password to sign in.
+- **Per-Course Evaluation Check:** Ensures each enrolled course unit has a completed evaluation record.
+- **Eligibility Gate:** Students with _all_ evaluations completed can generate & print their exam card.
+- **Guidance for Pending Evaluations:** Lists any course units awaiting feedback, with a link to the evaluation site and a brief rationale on why lecturer feedback matters.
+- **Self-Contained Mock:** Uses a sample SQLite database and placeholder data to simulate real portal behavior.
 
-## GitHub
+---
 
-To push to GitHub:
-1. `git init`
-2. `git add .`
-3. `git commit -m "Initial mock portal"`
-4. Create a GitHub repo and add remote:
-   `git remote add origin <your-repo-URL>`
-5. `git push -u origin main`
+## 🔧 How It Works
+
+1. **Login** with corporate email (portal ID) and a standard password.
+2. The server queries the database for all `enrollments` & `evaluations`.
+3. If **every** course unit shows `completed = true`, the portal renders a "Print Exam Card" button.
+4. Otherwise, it displays the list of pending units plus a short message:
+   
+   > _“You need to complete evaluations for these courses before printing your exam card.”_
+
+5. When eligible, the portal uses Puppeteer to generate a PDF of the exam card for download/print.
+
+---
+
+## 📬 Feedback & Contributions
+
+Feel free to open issues or pull requests to improve this mock portal.
+
