@@ -1,137 +1,208 @@
 // server/db.js
+const dbExists = async () => {
+  try {
+    await db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='students'");
+    return true;
+  } catch {
+    return false;
+  }
+};
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
-const db = new sqlite3.Database(path.join(__dirname, '../data/db.sqlite'));
 
-function run(sql, params=[]) { /* unchanged */ }
-function get(sql, params=[]) { /* unchanged */ }
-function all(sql, params=[]) { /* unchanged */ }
+// Create database instance
+const dbInstance = new sqlite3.Database(path.join(__dirname, '../data/db.sqlite'));
 
-module.exports = {
-  init: async () => {
-    // existing tables...
-    await run(`CREATE TABLE IF NOT EXISTS students (
-      id INTEGER PRIMARY KEY, reg_no TEXT UNIQUE, name TEXT, email TEXT
-    )`);
-    await run(`CREATE TABLE IF NOT EXISTS lecturers (
-      id INTEGER PRIMARY KEY, tsc_no TEXT UNIQUE, name TEXT
-    )`);
-    await run(`CREATE TABLE IF NOT EXISTS courses (
-      id INTEGER PRIMARY KEY, code TEXT UNIQUE, title TEXT
-    )`);
-    await run(`CREATE TABLE IF NOT EXISTS course_lecturers (
-      id INTEGER PRIMARY KEY,
-      course_id INTEGER,
-      lecturer_id INTEGER,
-      FOREIGN KEY(course_id) REFERENCES courses(id),
-      FOREIGN KEY(lecturer_id) REFERENCES lecturers(id)
-    )`);
-    await run(`CREATE TABLE IF NOT EXISTS enrollments (
-      id INTEGER PRIMARY KEY,
-      student_id INTEGER,
-      course_id INTEGER,
-      FOREIGN KEY(student_id) REFERENCES students(id),
-      FOREIGN KEY(course_id) REFERENCES courses(id)
-    )`);
-    await run(`CREATE TABLE IF NOT EXISTS evaluations (
-      enrollment_id INTEGER PRIMARY KEY,
-      completed BOOLEAN,
-      completed_at DATETIME,
-      FOREIGN KEY(enrollment_id) REFERENCES enrollments(id)
-    )`);
-
-    // NEW TABLES
-    await run(`CREATE TABLE IF NOT EXISTS admins (
-      id INTEGER PRIMARY KEY,
-      username TEXT UNIQUE,
-      password TEXT
-    )`);
-    await run(`CREATE TABLE IF NOT EXISTS questions (
-      id INTEGER PRIMARY KEY,
-      text TEXT,
-      type TEXT   -- 'yesno' or 'likert'
-    )`);
-    await run(`CREATE TABLE IF NOT EXISTS feedback (
-      id INTEGER PRIMARY KEY,
-      enrollment_id INTEGER,
-      question_id INTEGER,
-      response TEXT,
-      comment TEXT,
-      created_at DATETIME,
-      FOREIGN KEY(enrollment_id) REFERENCES enrollments(id),
-      FOREIGN KEY(question_id) REFERENCES questions(id)
-    )`);
-    await run(`CREATE TABLE IF NOT EXISTS prints (
-      id INTEGER PRIMARY KEY,
-      student_id INTEGER UNIQUE,
-      admin_id INTEGER,
-      printed_at DATETIME,
-      FOREIGN KEY(student_id) REFERENCES students(id),
-      FOREIGN KEY(admin_id) REFERENCES admins(id)
-    )`);
+// Create a separate object for our methods
+const db = {
+  // Promisified database methods
+  run: (sql, params = []) => {
+    return new Promise((resolve, reject) => {
+      dbInstance.run(sql, params, function(err) {
+        if (err) reject(err);
+        else resolve(this);
+      });
+    });
   },
 
-  run, get, all,
+  get: (sql, params = []) => {
+    return new Promise((resolve, reject) => {
+      dbInstance.get(sql, params, (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+  },
 
-  // STUDENT lookups
-  getStudentByRegNo: reg_no => get('SELECT * FROM students WHERE reg_no=?',[reg_no]),
+  all: (sql, params = []) => {
+    return new Promise((resolve, reject) => {
+      dbInstance.all(sql, params, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+  },
 
-  // ADMIN lookup
-  getAdminByUsername: username =>
-    get('SELECT * FROM admins WHERE username=?',[username]),
+  // Get last inserted ID
+  getLastId: () => {
+    return new Promise((resolve, reject) => {
+      dbInstance.get('SELECT last_insert_rowid() as id', (err, row) => {
+        if (err) reject(err);
+        else resolve(row?.id);
+      });
+    });
+  },
 
-  // QUESTIONS
-  getAllQuestions: () => all('SELECT * FROM questions ORDER BY id'),
+  // Database initialization
+  init: async () => {
+    try {
+      await db.run(`CREATE TABLE IF NOT EXISTS students (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        reg_no TEXT UNIQUE NOT NULL, 
+        name TEXT NOT NULL, 
+        email TEXT NOT NULL
+      )`);
 
-  // EVALUATION STATUS
-  checkAllEvaluations: async student_id => {
-    const rows = await all(`
-      SELECT c.code,c.title,l.name AS lecturer,e.completed
+      await db.run(`CREATE TABLE IF NOT EXISTS lecturers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        tsc_no TEXT UNIQUE NOT NULL, 
+        name TEXT NOT NULL,
+        department TEXT
+      )`);
+
+      await db.run(`CREATE TABLE IF NOT EXISTS courses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        code TEXT UNIQUE NOT NULL, 
+        title TEXT NOT NULL,
+        credits INTEGER DEFAULT 3
+      )`);
+
+      await db.run(`CREATE TABLE IF NOT EXISTS course_lecturers (
+        course_id INTEGER NOT NULL,
+        lecturer_id INTEGER NOT NULL,
+        PRIMARY KEY (course_id, lecturer_id),
+        FOREIGN KEY(course_id) REFERENCES courses(id) ON DELETE CASCADE,
+        FOREIGN KEY(lecturer_id) REFERENCES lecturers(id) ON DELETE CASCADE
+      )`);
+
+      await db.run(`CREATE TABLE IF NOT EXISTS enrollments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER NOT NULL,
+        course_id INTEGER NOT NULL,
+        UNIQUE(student_id, course_id),
+        FOREIGN KEY(student_id) REFERENCES students(id) ON DELETE CASCADE,
+        FOREIGN KEY(course_id) REFERENCES courses(id) ON DELETE CASCADE
+      )`);
+
+      await db.run(`CREATE TABLE IF NOT EXISTS evaluations (
+        enrollment_id INTEGER PRIMARY KEY,
+        completed BOOLEAN DEFAULT 0,
+        completed_at DATETIME,
+        FOREIGN KEY(enrollment_id) REFERENCES enrollments(id) ON DELETE CASCADE
+      )`);
+
+      await db.run(`CREATE TABLE IF NOT EXISTS admins (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        role TEXT
+      )`);
+
+      await db.run(`CREATE TABLE IF NOT EXISTS questions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        text TEXT NOT NULL,
+        type TEXT NOT NULL CHECK(type IN ('yesno', 'likert')),
+        category TEXT
+      )`);
+
+      await db.run(`CREATE TABLE IF NOT EXISTS feedback (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        enrollment_id INTEGER NOT NULL,
+        question_id INTEGER NOT NULL,
+        response TEXT NOT NULL,
+        comment TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(enrollment_id) REFERENCES enrollments(id) ON DELETE CASCADE,
+        FOREIGN KEY(question_id) REFERENCES questions(id) ON DELETE CASCADE
+      )`);
+
+      await db.run(`CREATE TABLE IF NOT EXISTS prints (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER UNIQUE NOT NULL,
+        admin_id INTEGER NOT NULL,
+        printed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(student_id) REFERENCES students(id) ON DELETE CASCADE,
+        FOREIGN KEY(admin_id) REFERENCES admins(id) ON DELETE CASCADE
+      )`);
+
+      console.log('Database tables initialized successfully');
+    } catch (err) {
+      console.error('Database initialization failed:', err);
+      throw err;
+    }
+  },
+
+  // Student operations
+  getStudentByRegNo: (reg_no) => db.get('SELECT * FROM students WHERE reg_no = ?', [reg_no]),
+
+  // Admin operations
+  getAdminByUsername: (username) => db.get('SELECT * FROM admins WHERE username = ?', [username]),
+
+  // Question operations
+  getAllQuestions: () => db.all('SELECT * FROM questions ORDER BY id'),
+
+  // Evaluation operations
+  checkAllEvaluations: async (student_id) => {
+    const rows = await db.all(`
+      SELECT c.code, c.title, l.name AS lecturer, e.completed
       FROM enrollments en
-      JOIN courses c ON en.course_id=c.id
-      JOIN course_lecturers cl ON cl.course_id=c.id
-      JOIN lecturers l ON cl.lecturer_id=l.id
-      LEFT JOIN evaluations e ON e.enrollment_id=en.id
-      WHERE en.student_id=?
-    `,[student_id]);
-    const pending = rows.filter(r=>!r.completed);
+      JOIN courses c ON en.course_id = c.id
+      JOIN course_lecturers cl ON cl.course_id = c.id
+      JOIN lecturers l ON cl.lecturer_id = l.id
+      LEFT JOIN evaluations e ON e.enrollment_id = en.id
+      WHERE en.student_id = ?
+    `, [student_id]);
+    
+    const pending = rows.filter(r => !r.completed);
     return {
-      allDone: pending.length===0,
-      pending: pending.map(r=>({
-        code:r.code,title:r.title,lecturer:r.lecturer
+      allDone: pending.length === 0,
+      pending: pending.map(r => ({
+        code: r.code,
+        title: r.title,
+        lecturer: r.lecturer
       }))
     };
   },
 
-  // FEEDBACK
-  clearFeedbackFor: enrollment_ids =>
-    Promise.all(enrollment_ids.map(id=>
-      run('DELETE FROM feedback WHERE enrollment_id=?',[id])
+  // Feedback operations
+  clearFeedbackFor: (enrollment_ids) => 
+    Promise.all(enrollment_ids.map(id =>
+      db.run('DELETE FROM feedback WHERE enrollment_id = ?', [id])
     )),
 
   saveFeedback: (enrollment_id, question_id, response, comment) =>
-    run(`INSERT INTO feedback
-      (enrollment_id,question_id,response,comment,created_at)
-     VALUES (?,?,?,?,?)`,[
-      enrollment_id,question_id,response,comment,new Date().toISOString()
-    ]),
+    db.run(`
+      INSERT INTO feedback 
+      (enrollment_id, question_id, response, comment) 
+      VALUES (?, ?, ?, ?)
+    `, [enrollment_id, question_id, response, comment]),
 
   markEvaluationDone: (enrollment_id) =>
-    run(`INSERT OR REPLACE INTO evaluations
-      (enrollment_id,completed,completed_at)
-     VALUES (?,?,?)`,[
-      enrollment_id,1,new Date().toISOString()
-    ]),
+    db.run(`
+      INSERT OR REPLACE INTO evaluations 
+      (enrollment_id, completed, completed_at) 
+      VALUES (?, 1, CURRENT_TIMESTAMP)
+    `, [enrollment_id]),
 
-  // ADMIN printing
-  getPrintRecord: student_id =>
-    get('SELECT * FROM prints WHERE student_id=?',[student_id]),
+  // Print operations
+  getPrintRecord: (student_id) => 
+    db.get('SELECT * FROM prints WHERE student_id = ?', [student_id]),
 
   recordPrint: (student_id, admin_id) =>
-    run(`INSERT INTO prints (student_id,admin_id,printed_at)
-      VALUES (?,?,?)`,[
-      student_id,admin_id,new Date().toISOString()
-    ]),
-
-  // re-export other helpers as needed...
+    db.run(`
+      INSERT INTO prints (student_id, admin_id) 
+      VALUES (?, ?)
+    `, [student_id, admin_id])
 };
+
+module.exports = db;
