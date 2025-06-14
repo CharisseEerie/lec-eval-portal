@@ -68,6 +68,18 @@ app.post('/login', async (req, res) => {
   res.redirect('/dashboard');
 });
 
+// Student logout
+app.post('/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      console.error('Logout error:', err);
+      return res.redirect('/dashboard');
+    }
+    res.clearCookie('connect.sid');
+    res.redirect('/login');
+  });
+});
+
 // Student dashboard
 app.get('/dashboard', async (req, res) => {
   if (!req.session.student) {
@@ -112,6 +124,18 @@ app.post('/admin/login', async (req, res) => {
   }
   req.session.admin = admin;
   res.redirect('/admin/dashboard');
+});
+
+// Admin logout
+app.post('/admin/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      console.error('Admin logout error:', err);
+      return res.redirect('/admin/dashboard');
+    }
+    res.clearCookie('connect.sid');
+    res.redirect('/admin/login');
+  });
 });
 
 // Admin dashboard

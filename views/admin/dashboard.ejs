@@ -5,23 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
+        /* CSS Rules */
         .status-badge {
             font-size: 0.85rem;
             padding: 0.35em 0.65em;
         }
+        
         .card-header {
             font-weight: 600;
         }
+        
         .progress-thin {
             height: 6px;
         }
+        
         .action-btn {
             min-width: 140px;
         }
+        
         .verified-tick {
             color: #28a745;
         }
+        
         .status-indicator {
             width: 12px;
             height: 12px;
@@ -29,29 +36,41 @@
             display: inline-block;
             margin-right: 6px;
         }
+        
         .status-ready {
             background-color: #28a745;
         }
+        
         .status-pending {
             background-color: #ffc107;
         }
+        
         .status-printed {
             background-color: #6c757d;
+        }
+        
+        .nowrap {
+            white-space: nowrap;
         }
     </style>
 </head>
 <body class="bg-light">
     <div class="container py-4">
+        <!-- Header with Logout -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>Admin Dashboard</h1>
             <div>
                 <span class="text-muted me-2">Logged in as:</span>
                 <strong><%= admin.username %></strong>
-                <a href="/admin/logout" class="btn btn-sm btn-outline-danger ms-3">Logout</a>
+                <form action="/admin/logout" method="POST" class="d-inline ms-3">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </button>
+                </form>
             </div>
         </div>
 
-        <!-- Error message display (only shows if error exists) -->
+        <!-- Alerts -->
         <% if (typeof error !== 'undefined' && error) { %>
             <div class="alert alert-danger alert-dismissible fade show">
                 <%= error %>
@@ -59,7 +78,6 @@
             </div>
         <% } %>
 
-        <!-- Success message display (only shows if success exists) -->
         <% if (typeof success !== 'undefined' && success) { %>
             <div class="alert alert-success alert-dismissible fade show">
                 <%= success %>
@@ -67,6 +85,7 @@
             </div>
         <% } %>
 
+        <!-- Main Content -->
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <span>Student Evaluation Status</span>
@@ -93,14 +112,9 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="progress progress-thin w-100 me-2">
-                                                <div class="progress-bar 
-                                                    <% if(student.completed_count === student.total_courses) { %>
-                                                        bg-success
-                                                    <% } else { %>
-                                                        bg-warning
-                                                    <% } %>" 
+                                                <div class="progress-bar <%= student.completed_count === student.total_courses ? 'bg-success' : 'bg-warning' %>" 
                                                     role="progressbar" 
-                                                    style="width: <%= (student.completed_count/student.total_courses)*100 %>%"
+                                                    style="width:  <%= (student.completed_count/student.total_courses)*100 %>"
                                                     aria-valuenow="<%= student.completed_count %>" 
                                                     aria-valuemin="0" 
                                                     aria-valuemax="<%= student.total_courses %>">
@@ -164,6 +178,7 @@
             </div>
         </div>
 
+        <!-- Instructions -->
         <div class="alert alert-info">
             <h5><i class="bi bi-info-circle-fill"></i> Instructions</h5>
             <ul class="mb-0">
@@ -177,9 +192,6 @@
         </div>
     </div>
 
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

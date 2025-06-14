@@ -117,9 +117,11 @@
                     <p class="mb-0 opacity-75"><%= student.reg_no %></p>
                 </div>
                 <div class="text-end">
-                    <a href="/logout" class="btn btn-outline-light btn-sm">
-                        <i class="bi bi-box-arrow-right"></i> Logout
-                    </a>
+                    <form action="/logout" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-outline-light btn-sm">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
