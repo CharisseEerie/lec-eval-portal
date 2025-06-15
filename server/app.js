@@ -97,6 +97,17 @@ app.get('/dashboard', async (req, res) => {
     JOIN lecturers l ON cl.lecturer_id = l.id
     LEFT JOIN evaluations e ON e.enrollment_id = en.id
     WHERE en.student_id = ?
+    AND (e.completed IS NULL OR e.completed = 0)
+  `, [studentId]);
+
+ // Get completion status
+  const completionStatus = await db.get(`
+    SELECT 
+      COUNT(*) as total,
+      SUM(CASE WHEN e.completed = 1 THEN 1 ELSE 0 END) as completed
+    FROM enrollments en
+    LEFT JOIN evaluations e ON e.enrollment_id = en.id
+    WHERE en.student_id = ?
   `, [studentId]);
 
   const allDone = courses.every(c => c.evaluation_done);
