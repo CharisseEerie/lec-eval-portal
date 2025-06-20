@@ -1,0 +1,8 @@
+{
+    "postCreateCommand": "bash ~/.postgres-setup/configure-postgres.sh",
+    "customizations": {
+        "codespaces": {
+            "postStartCommand": "sudo /etc/init.d/postgresql start"
+        }
+    }
+}
