@@ -1,0 +1,23 @@
+{
+  "name": "lec-eval-portal",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "start": "node server/app.js",
+    "seed": "node scripts/seed.js",
+    "init": "node scripts/init.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "ejs": "^3.1.8",
+    "express": "^4.21.2",
+    "express-session": "^1.17.3",
+    "puppeteer": "^20.7.2",
+    "sqlite3": "^5.1.7"
+  },
+  "description": "**Purpose:** This portal verifies that a student has completed all lecturer evaluations for their enrolled course units before granting access to their exam card.",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
