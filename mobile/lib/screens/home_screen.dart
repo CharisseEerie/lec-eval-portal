@@ -1,3 +1,10 @@
+import 'package:ku_eval_mobile/screens/academic_calendar_screen.dart';
+import 'package:ku_eval_mobile/screens/exam_results_screen.dart';
+import 'package:ku_eval_mobile/screens/fee_balance_screen.dart' show FeeBalanceScreen;
+import 'package:ku_eval_mobile/screens/login_screen.dart';
+import 'package:ku_eval_mobile/screens/profile_screen.dart' show ProfileScreen;
+import 'package:ku_eval_mobile/screens/registered_units_screen.dart';
+
 import 'evaluation_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,24 +23,25 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0033A0),
-        title: Text(
-          'KU Student Portal',
-          style: GoogleFonts.roboto(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person, color: Colors.white),
-            onPressed: () {
-              // Profile screen (coming soon)
-            },
-          ),
-        ],
-      ),
+      appBar:AppBar(
+  backgroundColor: const Color(0xFF0033A0),
+  title: Text(
+    'Welcome, $studentName',
+    style: GoogleFonts.roboto(fontWeight: FontWeight.bold, color: Colors.white),
+  ),
+  actions: [
+    IconButton(
+      icon: const Icon(Icons.logout, color: Colors.white),
+      onPressed: () {
+  Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute(builder: (_) => const LoginScreen()), // ← Remove 'const' here
+    (route) => false,
+  );
+},
+      tooltip: 'Logout',
+    ),
+  ],
+),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -106,83 +114,86 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              children: [
-                _buildGridItem(
-                  icon: Icons.school,
-                  title: 'Academics',
-                  color: Colors.blue,
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Academics screen coming soon!')),
-                    );
-                  },
-                ),
-                _buildGridItem(
-                  icon: Icons.library_books,
-                  title: 'Courses',
-                  color: Colors.green,
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Courses screen coming soon!')),
-                    );
-                  },
-                ),
-                _buildGridItem(
-                  icon: Icons.rate_review,
-                  title: 'Lecturer Evaluation',
-                  color: Colors.orange,
-                  onTap: () {
-                    Navigator.push(
-                     context,
-                      MaterialPageRoute(
-                        builder: (context) => EvaluationScreen(
-                         studentName: studentName,
-                             regNo: regNo,
-                        ),
-              ),
-            );
-        },
-                ),
-
-                _buildGridItem(
-                  icon: Icons.assignment,
-                  title: 'Exam Cards',
-                  color: Colors.purple,
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Exam cards screen coming soon!')),
-                    );
-                  },
-                ),
-                _buildGridItem(
-                  icon: Icons.payment,
-                  title: 'Fee Statement',
-                  color: Colors.red,
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Fee statement screen coming soon!')),
-                    );
-                  },
-                ),
-                _buildGridItem(
-                  icon: Icons.person,
-                  title: 'Profile',
-                  color: Colors.teal,
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Profile screen coming soon!')),
-                    );
-                  },
-                ),
-              ],
+GridView.count(
+  shrinkWrap: true,
+  physics: const NeverScrollableScrollPhysics(),
+  crossAxisCount: 2,
+  crossAxisSpacing: 16,
+  mainAxisSpacing: 16,
+  children: [
+    _buildGridItem(
+      icon: Icons.school,
+      title: 'Academics',
+      color: Colors.blue,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AcademicCalendarScreen()),
+        );
+      },
+    ),
+    _buildGridItem(
+      icon: Icons.library_books,
+      title: 'Courses',
+      color: Colors.green,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const RegisteredUnitsScreen()),
+        );
+      },
+    ),
+    _buildGridItem(
+      icon: Icons.rate_review,
+      title: 'Lecturer Evaluation',
+      color: Colors.orange,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => EvaluationScreen(
+              studentName: studentName,
+              regNo: regNo,
             ),
+          ),
+        );
+      },
+    ),
+    _buildGridItem(
+      icon: Icons.assignment,
+      title: 'Exam Cards',
+      color: Colors.purple,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ExamResultsScreen()),
+        );
+      },
+    ),
+    _buildGridItem(
+      icon: Icons.payment,
+      title: 'Fee Statement',
+      color: Colors.red,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const FeeBalanceScreen()),
+        );
+      },
+    ),
+    _buildGridItem(
+      icon: Icons.person,
+      title: 'Profile',
+      color: Colors.teal,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+        );
+      },
+    ),
+  ],
+),
 
             const SizedBox(height: 24),
 

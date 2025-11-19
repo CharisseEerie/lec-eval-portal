@@ -1,6 +1,10 @@
 // mobile/lib/screens/evaluation_screen.dart
+import '../services/mock_database.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/global.dart';
+
+String currentStudentId = '';
 
 class EvaluationScreen extends StatefulWidget {
   final String studentName;
@@ -201,20 +205,15 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          onPressed: _requestSent
-              ? null
-              : () {
-                  setState(() => _requestSent = true);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Exam card request sent! You will be notified when approved.',
-                      ),
-                      backgroundColor: Colors.green,
-                      duration: Duration(seconds: 4),
-                    ),
-                  );
-                },
+         onPressed: () {
+  MockDatabase.instance.completeAllEvaluations(currentLoggedInStudentId);
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('All 8 evaluations completed! Exam card request sent to admin.'),
+      backgroundColor: Colors.green,
+    ),
+  );
+},
         ),
       ),
     );

@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'home_screen.dart';
 import 'admin_dashboard_screen.dart';
 
+String currentLoggedInStudentId = '1'; // default to Charissa
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -21,9 +23,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Mock credentials
   final Map<String, String> _studentCredentials = {
-    'I21/6574/2021@students.ku.ac.ke': 'password123',
-    'J22/1234/2022@students.ku.ac.ke': 'password123',
-  };
+  'I21/6574/2021@students.ku.ac.ke': 'password123',  // Charissa
+  'K22/8901/2022@students.ku.ac.ke': 'password123',  // Kelvin
+  'F21/3456/2021@students.ku.ac.ke': 'password123',  // Fatuma
+};
 
   final String _adminId = 'admin123';
   final String _adminPass = 'admin123';
@@ -67,32 +70,45 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
     if (!success) return;
 
-  if (_isStudent && studentName != null) {
+ if (_isStudent && studentName != null) {
   if (!mounted) return;
+
+  // Set student ID for mock database
+  String studentId = '1';
+  if (input == 'I21/6574/2021@students.ku.ac.ke') {
+    studentId = '1'; // Charissa
+  } else if (input == 'K22/8901/2022@students.ku.ac.ke') {
+    studentId = '2'; // Kelvin
+  } else if (input == 'F21/3456/2021@students.ku.ac.ke') {
+    studentId = '3'; // Fatuma
+  }
+
+  currentLoggedInStudentId = studentId;
+
   Navigator.of(context).pushReplacement(
     MaterialPageRoute(
       builder: (_) => HomeScreen(
-        studentName: studentName ?? 'Student', 
-        regNo: input.isNotEmpty ? input : 'Unknown',
+        studentName: studentName!, // Now safe — we checked null above
+        regNo: input.split('@').first,
       ),
     ),
   );
 } else {
-  if (!mounted) return;
-  Navigator.of(context).pushReplacement(
-    MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
-  );
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+      );
+    }
+  }
+
+ String _getNameFromRegNo(String email) {
+  final map = {
+    'I21/6574/2021@students.ku.ac.ke': 'Charissa Sarah A.',
+    'K22/8901/2022@students.ku.ac.ke': 'Kelvin Omondi',
+    'F21/3456/2021@students.ku.ac.ke': 'Fatuma Ali',
+  };
+  return map[email] ?? 'Student';
 }
-
-  }
-
-  String _getNameFromRegNo(String regNo) {
-    final map = {
-      'I21/6574/2021@students.ku.ac.ke': 'Charissa Sarah A.',
-      'J22/1234/2022@students.ku.ac.ke': 'John Doe',
-    };
-    return map[regNo] ?? 'Student';
-  }
 
   @override
   Widget build(BuildContext context) {
